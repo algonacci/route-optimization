@@ -20,3 +20,10 @@ def root():
 def optimize(body: CoordinateList):
     solution = optimize_route(coordinates=body.data).tolist()
     return WebResponse(info=Info(message="Success optimize route"), data=solution)
+
+
+if __name__ == "__main__":
+    app.run(
+        host="0.0.0.0",
+        port=6836
+    )
