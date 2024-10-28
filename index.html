@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Route Visualization with Leaflet and Mapbox</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+      #map1,
+      #map2 {
+        height: 400px;
+        width: 100%;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Optimized Route</h2>
+    <div id="map1"></div>
+    <h2>Original Route</h2>
+    <div id="map2"></div>
+
+    <script>
+      // Coordinates and names for the locations
+      const coordinates = [
+        {
+          lat: -6.17544156093084,
+          lon: 106.827174236456,
+          name: "Monumen Nasional",
+        },
+        {
+          lat: -6.164945467641251,
+          lon: 106.81535296401418,
+          name: "Bank Syariah Mega Indonesia PT",
+        },
+        {
+          lat: -6.1884118850865235,
+          lon: 106.83981471023,
+          name: "Jl. Kali Pasir No. 99",
+        },
+        {
+          lat: -6.1878145710057755,
+          lon: 106.80985979995168,
+          name: "Museum Textile",
+        },
+        {
+          lat: -6.169809501406068,
+          lon: 106.81037478408254,
+          name: "Jl. Sangihe Dalam Blok B No. 15",
+        },
+        {
+          lat: -6.1606787346323655,
+          lon: 106.84929900130666,
+          name: "Chicken Popop Kemayoran",
+        },
+      ];
+
+      // Sorted order: 0, 3, 5, 1, 4, 2
+      const sortedOrder = [0, 3, 5, 1, 4, 2];
+      const sortedCoordinates = sortedOrder.map((index) => coordinates[index]);
+
+      const mapboxAccessToken = "";
+
+      // Function to create a map and add markers, with driving routes from Mapbox
+      async function createMap(mapId, route, title) {
+        const map = L.map(mapId).setView([route[0].lat, route[0].lon], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: "© OpenStreetMap",
+        }).addTo(map);
+
+        // Add markers
+        let latlngs = [];
+        route.forEach((location, index) => {
+          latlngs.push([location.lat, location.lon]);
+          L.marker([location.lat, location.lon])
+            .addTo(map)
+            .bindPopup(`<b>${index + 1}. ${location.name}</b>`)
+            .openPopup();
+        });
+
+        // Get the route using Mapbox Directions API
+        const coordinatesStr = route
+          .map((loc) => `${loc.lon},${loc.lat}`)
+          .join(";");
+        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinatesStr}?geometries=geojson&access_token=${mapboxAccessToken}`;
+
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+          const routeGeoJSON = data.routes[0].geometry;
+
+          // Add the polyline for the driving route
+          L.geoJSON(routeGeoJSON, { color: "blue" }).addTo(map);
+        } catch (error) {
+          console.error("Error fetching the route:", error);
+        }
+      }
+
+      // Create the maps
+      createMap("map1", coordinates, "Original Route");
+      createMap("map2", sortedCoordinates, "Sorted Route");
+    </script>
+  </body>
+</html>
